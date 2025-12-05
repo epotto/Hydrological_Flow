@@ -6,8 +6,16 @@ library(dplyr)
 library(lubridate)
 library(RcppRoll)
 
-post <- read_csv("data/post_data.csv")
 
+
+# Use lubridate functions for time durations
+
+
+
+
+
+post <- read_csv("data/post_data.csv")
+pre <- read_csv("data/pre_data.csv")
 
 # Group 1
 
@@ -374,7 +382,10 @@ hi_pulse <- function(data){
     filter(cfs > q75)
   num <- dat_filt |>
     ungroup() |>
-    reframe(value = sum(cfs/cfs)) |>
+    group_by(y) |>
+    summarise(value = sum(cfs/cfs)) |>
+    ungroup() |>
+    summarise(value = mean(value)) |>
     mutate(group = 4,
            metric = "Number of High Pulses")
   return(num)
@@ -390,7 +401,10 @@ low_pulse <- function(data){
     filter(cfs < q25)
   num <- dat_filt |>
     ungroup() |>
-    reframe(value = sum(cfs/cfs)) |>
+    group_by(y) |>
+    summarise(value = sum(cfs/cfs)) |>
+    ungroup() |>
+    summarise(value = mean(value)) |>
     mutate(group = 4,
            metric = "Number of Low Pulses")
   return(num)
@@ -398,9 +412,134 @@ low_pulse <- function(data){
 
 low_pulse(post)
 
+hi_duration1 <- function(data){
+  dat_in <- data
+  dat_quantile <- dat_in |>
+    group_by(y) |>
+    mutate(q75 = (cfs >= quantile(cfs, probs = 0.75)))
+  counter = 1
+  days[1] = counter
+  days_of_year <- data$consecutive_date[nrow(data)] / length(unique(data$y)) #calculating how many days in each year (by avg)
+  day_num = 0
+  year_num = 1
+  year_mean = vector(mode = "numeric", length = (length(unique(dat_quantile$y))))
+  days_to_subtract = 0
+   for(i in 1:nrow(dat_in) - 1){
+     days <- 0
+     if(dat_quantile$q75[i] == FALSE){
+       return(1)
+     }
+}
+   #   if(dat_quantile$q75[i] == FALSE){ # If it isn't a high flow
+   #     days_to_subtract <- days_to_subtract + 1
+   #   }
+   #   if(dat_quantile$q75[i] == TRUE){ # If it is high flow
+   #     counter = counter + 1
+   #   }
+   #   if(data$y[i+1] == data$y[i]){ # If year hasn't changed
+   #     day_num = day_num + 1
+   #   }
+   #   if(data$d == 365.2*year_num & data$y[i+1] != data$y[i]){ # If year has changed based on both metrics,
+   #     year_mean[year_num] = counter / (day_num - days_to_subtract)
+   #     year_num = year_num + 1
+   #   }
+   # }
+  return(year_mean)
+}
+
+hi_duration1(post)
+
+
+hi_duration2 <- function(data){
+    dat_in <- data
+    dat_quantile <- dat_in |>
+      group_by(y) |>
+      mutate(q75 = (cfs >= quantile(cfs, probs = 0.75)))
+    counter = 0
+    days = vector(mode = "numeric", length = 366)
+    year = vector(mode = "numeric", length = length(unique(data$y)))
+    year_count = 1
+    mean_duration = c()
+    for(i in 1:(nrow(dat_in) - 1)){
+      if(dat_quantile$q75[i] == TRUE){
+        counter = counter + 1
+        days[i] = 0
+      }
+      if(dat_quantile$q75[i] == FALSE){
+        days[i] = counter
+        mean_duration[i] =
+        counter = 0
+      }
+      if(dat_quantile$y[i] != dat_quantile$y[i+1]){
+        mean_duration = days > 0
+        year[year_count] = mean(mean_duration)
+        year_count = year_count + 1
+        counter = 0
+        mean_duration = c()
+      }
+    }
+    return(mean(year))
+}
+
+numbers = c(1,2,3,4,5,6,0,0,0)
 
 
 
+hi_duration2(post)
+
+#hi_duration <- function(data){
+#  # dat_in <- post
+#  dat_in <- data
+#  dat_quantile <- dat_in |>
+#    group_by(y) |>
+#    mutate(q75 = (cfs >= quantile(cfs, probs = 0.75)))
+#  #dat_filter <- dat_quantile |>
+#    #filter(csf > q75)
+#  counter = 1
+#  counter_year = 1
+#  day_placement = 1
+#  days = vector(mode = "numeric", length = nrow(dat_in))
+#  days[1] = counter
+#  day_mean = vector(mode = "numeric", length = (length(unique(dat_quantile$y))))
+#  year = vector(mode = "numeric", length = (length(unique(dat_quantile))))
+#  # i = 1
+#   for(i in 1:nrow(dat_in)){
+#     for(i in 1:nrow(dat_in) - 1){
+#       if(dat_quantile$q75[i] == FALSE){ # If counter doesn't change
+#         day_placement = day_placement + 1
+#       }
+#     }
+#     year[i] = dat_in$y
+#     if(dat_quantile$q75[i] == TRUE){
+#     counter = counter + 1
+#     }
+#     if(dat_quantile$q75[i] == FALSE){ # If counter doesn't change
+#       day_placement = day_placement + 1
+#       days[day_placement] = counter # Put however many consecutive days just counted
+#       counter = 0 # Reset the counter
+#     }
+#     if(year[i+1] - year[i] != 0){ # If data prior is not equal to same year (new year)
+#       day_mean[counter_year] = mean(days)
+#       counter_year = counter_year + 1
+#     }
+#   consecutive_days = mean(days)
+#   return(consecutive_days)
+#   }
+# }
+
+hi_duration(post)
+
+counter = 1
+days_group[1] = counter
+for (i in 2:nrow(g3_days_in_25)){
+  c_lag = g3_days_in_25$c_lag
+  if(c_lag[i+1] - c_lag[i] < 0){
+    counter = counter + 1
+  }
+  days_group[i] = counter
+}
+days_group[length(days_group)] = counter
+days_group
 
 # Experimental Three_min and function for it
 
